@@ -34,6 +34,8 @@ Como la API **no devuelve una lista personalizada de objetos creados**, usaremos
   }
 }
 
+```
+
 ## ✅ Parte 2: Editar el objeto (`PUT`)
 
 1. Obtené el `id` guardado en el `localStorage`.
