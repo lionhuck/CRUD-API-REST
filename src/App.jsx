@@ -4,7 +4,10 @@ import { Column } from 'primereact/column';
 import './App.css';
 
 function App() {
-  const [listItems, setItems] = useState([]);
+  const [listItems, setItems] = useState(() => {
+    const savedItems = localStorage.getItem('computerItems');
+    return savedItems ? JSON.parse(savedItems) : [];
+  });
   const [loadingItems, setLoadingItems] = useState(false);
   const [inputProduct, setInputProduct] = useState('');
   const [inputYear, setInputYear] = useState('');
@@ -13,6 +16,9 @@ function App() {
   const [inputDisk, setInputDisk] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   
+  useEffect(() => {
+    localStorage.setItem('computerItems', JSON.stringify(listItems));
+  }, [listItems]);
 
   const postApi = async (addItem) => {
     const response = await fetch ('https://api.restful-api.dev/objects', {
@@ -34,6 +40,8 @@ function App() {
   }
 
   const addItem = () => {
+    if (!inputProduct.trim()) return; // Validación básica
+
     setLoadingItems(true)
     const newItem = (
         { "name": inputProduct, 
@@ -43,6 +51,11 @@ function App() {
             "CPU model": inputCpu,
             "Hard disk size": inputDisk }
       });
+      setInputProduct('');
+      setInputYear('');
+      setInputPrice('');
+      setInputCpu('');
+      setInputDisk('');
       postApi(newItem)
   };
 
@@ -101,25 +114,21 @@ function App() {
     };
 
 
-
-  const removeItem = (id) => {
-    setItems(listItems.filter(item => item.id !== id));
-  };
-
-
-
-
-
-
-
-
-
-
-  const removeAllItems = () => {
-    setItems([]);
-  };
-
-
+    const  removeItem = async (id) => {
+        setLoadingItems(true)
+        const response = await fetch(`https://api.restful-api.dev/objects/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        if(response.status === 200){
+          const data = await response.json()
+          console.log(data)
+          setItems(listItems.filter(item => item.id !== id))
+          setLoadingItems(false)
+        }
+      }
 
 
   const bodyActions = (rowData) => {
@@ -161,12 +170,11 @@ function App() {
         onChange={(e) => setInputDisk(e.target.value)} 
         placeholder="Hard disk Size" />
         <button onClick={addItem}>Agregar</button>
-        <button onClick={removeAllItems}>Eliminar todos</button>
       </div>
 
       {editingItem && (
         <div>
-          <h3>Editando producto</h3>
+          <h3>Editando producto {editingItem.name}</h3>
           <input 
             value={editingItem.name} 
             onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
